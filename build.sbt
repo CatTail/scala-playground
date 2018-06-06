@@ -7,10 +7,15 @@ scalaVersion := "2.12.4"
 // See Here for more info http://www.scala-lang.org/files/archive/nightly/docs/manual/html/scalac.html
 scalacOptions ++= List("-feature","-deprecation", "-unchecked", "-Xlint")
 
+val akkaVersion = "2.5.12"
+
 
 libraryDependencies ++= Seq(
   "org.scalatest"   %% "scalatest"    % "3.0.4"   % "test",
-  "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
+  "org.scalacheck" %% "scalacheck" % "1.13.4" % "test",
+  "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+  "com.typesafe.akka" %% "akka-testkit" % akkaVersion,
+  "com.typesafe.akka" %% "akka-stream" % akkaVersion
 )
 
 // For Settings/Task reference, see http://www.scala-sbt.org/release/sxr/sbt/Keys.scala.html
