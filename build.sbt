@@ -1,5 +1,5 @@
 organization := "com.github.fractal"
-name := "skeleton"
+name := "scala-playground"
 version := "1.4"
 
 scalaVersion := "2.12.4"

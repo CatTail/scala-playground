@@ -2,7 +2,7 @@ package com.example.playground
 
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, RestartSource, Sink, Source, ZipWith}
-import akka.stream.{ActorMaterializer, FlowShape, OverflowStrategy}
+import akka.stream._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -39,7 +39,7 @@ object AkkaStreamApp extends App with AkkaStreamPlayground {
     .runWith(Sink.foreach(println))
 }
 
-object AkkaStreamErrorHandingApp extends App with AkkaStreamPlayground {
+object SimpleErrorApp extends App with AkkaStreamPlayground {
   desc("simple error")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -47,7 +47,9 @@ object AkkaStreamErrorHandingApp extends App with AkkaStreamPlayground {
     .log("error logging")
     .mapAsync(2)(getPrint("after"))
     .runWith(Sink.ignore)
+}
 
+object ErrorWithRecoverApp extends App with AkkaStreamPlayground {
   desc("error with recover")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -58,7 +60,9 @@ object AkkaStreamErrorHandingApp extends App with AkkaStreamPlayground {
     .log("error logging")
     .mapAsync(2)(getPrint("after"))
     .runWith(Sink.ignore)
+}
 
+object ErrorWithBroadcastFlowsApp extends App with AkkaStreamPlayground {
   desc("error with broadcast flows")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -79,7 +83,9 @@ object AkkaStreamErrorHandingApp extends App with AkkaStreamPlayground {
     .log("error logging")
     .mapAsync(2)(getPrint("after"))
     .runWith(Sink.ignore)
+}
 
+object ErrorInsideBroadcastFlowsApp extends App with AkkaStreamPlayground {
   desc("error inside one of broadcast flows")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -99,7 +105,9 @@ object AkkaStreamErrorHandingApp extends App with AkkaStreamPlayground {
     .log("error logging")
     .mapAsync(2)(getPrint("after"))
     .runWith(Sink.ignore)
+}
 
+object ErrorInsideBroadcastFlowsWithBufferApp extends App with AkkaStreamPlayground {
   desc("error inside one of broadcast flows with buffer")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -119,7 +127,9 @@ object AkkaStreamErrorHandingApp extends App with AkkaStreamPlayground {
     .log("error logging")
     .mapAsync(2)(getPrint("after"))
     .runWith(Sink.ignore)
+}
 
+object DelayedRestartWithBackoffStageApp extends App with AkkaStreamPlayground {
   desc("Delayed restarts with a backoff stage")
   RestartSource.withBackoff(
     minBackoff = 100.milliseconds,
@@ -133,6 +143,20 @@ object AkkaStreamErrorHandingApp extends App with AkkaStreamPlayground {
       .mapAsync(2)(action)
       .log("error logging")
   }
-  .mapAsync(2)(getPrint("after"))
-  .runWith(Sink.ignore)
+    .mapAsync(2)(getPrint("after"))
+    .runWith(Sink.ignore)
+}
+
+// recover element will lost when working with supervision strategy
+object RecoverWithSupervisionStrategyApp extends App with AkkaStreamPlayground {
+  Source(-5 to 5)
+    .mapAsync(2)(getPrint("before"))
+    .mapAsync(2)(action)
+    .recover {
+      case _ => 99999
+    }
+    .withAttributes(ActorAttributes.supervisionStrategy(Supervision.resumingDecider))
+    .log("error logging")
+    .mapAsync(2)(getPrint("after"))
+    .runWith(Sink.ignore)
 }
