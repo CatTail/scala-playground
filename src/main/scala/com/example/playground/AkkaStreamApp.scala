@@ -4,42 +4,16 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, RestartSource, Sink, Source, ZipWith}
 import akka.stream._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.util.Random
 import scala.concurrent.duration._
 
-trait AkkaStreamPlayground {
-  implicit val system = ActorSystem("QuickStart")
-  implicit val materializer = ActorMaterializer()
-
-  def desc(title: String): Unit = {
-    Thread.sleep(100)
-    println()
-    println(s"========== $title ==========")
-    println()
-  }
-
-  def getPrint[T](name: String) = (input: T) => Future {
-    Thread.sleep(Random.nextInt(10))
-    println(s"$name: ${input.toString}")
-    input
-  }
-
-  // throwing ArithmeticException: / by zero
-  def action(input: Int) = Future {
-    Thread.sleep(Random.nextInt(10))
-    1 / input
-    input
-  }
-}
-
-object AkkaStreamApp extends App with AkkaStreamPlayground {
+object AkkaStreamApp extends App with Utils {
   Source(-5 to 5)
     .runWith(Sink.foreach(println))
 }
 
-object SimpleErrorApp extends App with AkkaStreamPlayground {
+object SimpleErrorApp extends App with Utils {
   desc("simple error")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -49,7 +23,7 @@ object SimpleErrorApp extends App with AkkaStreamPlayground {
     .runWith(Sink.ignore)
 }
 
-object ErrorWithRecoverApp extends App with AkkaStreamPlayground {
+object ErrorWithRecoverApp extends App with Utils {
   desc("error with recover")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -62,7 +36,7 @@ object ErrorWithRecoverApp extends App with AkkaStreamPlayground {
     .runWith(Sink.ignore)
 }
 
-object ErrorWithBroadcastFlowsApp extends App with AkkaStreamPlayground {
+object ErrorWithBroadcastFlowsApp extends App with Utils {
   desc("error with broadcast flows")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -85,7 +59,7 @@ object ErrorWithBroadcastFlowsApp extends App with AkkaStreamPlayground {
     .runWith(Sink.ignore)
 }
 
-object ErrorInsideBroadcastFlowsApp extends App with AkkaStreamPlayground {
+object ErrorInsideBroadcastFlowsApp extends App with Utils {
   desc("error inside one of broadcast flows")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -107,7 +81,7 @@ object ErrorInsideBroadcastFlowsApp extends App with AkkaStreamPlayground {
     .runWith(Sink.ignore)
 }
 
-object ErrorInsideBroadcastFlowsWithBufferApp extends App with AkkaStreamPlayground {
+object ErrorInsideBroadcastFlowsWithBufferApp extends App with Utils {
   desc("error inside one of broadcast flows with buffer")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -129,7 +103,7 @@ object ErrorInsideBroadcastFlowsWithBufferApp extends App with AkkaStreamPlaygro
     .runWith(Sink.ignore)
 }
 
-object DelayedRestartWithBackoffStageApp extends App with AkkaStreamPlayground {
+object DelayedRestartWithBackoffStageApp extends App with Utils {
   desc("Delayed restarts with a backoff stage")
   RestartSource.withBackoff(
     minBackoff = 100.milliseconds,
@@ -148,7 +122,7 @@ object DelayedRestartWithBackoffStageApp extends App with AkkaStreamPlayground {
 }
 
 // recover element will lost when working with supervision strategy
-object RecoverWithSupervisionStrategyApp extends App with AkkaStreamPlayground {
+object RecoverWithSupervisionStrategyApp extends App with Utils {
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
     .mapAsync(2)(action)
@@ -161,7 +135,7 @@ object RecoverWithSupervisionStrategyApp extends App with AkkaStreamPlayground {
     .runWith(Sink.ignore)
 }
 
-object SourceQueueApp extends App with AkkaStreamPlayground {
+object SourceQueueApp extends App with Utils {
   desc("throw exception if offer element to failed source queue")
   val queue = Source.queue[Int](1, OverflowStrategy.backpressure)
     .map { value =>
