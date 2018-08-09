@@ -5,7 +5,7 @@ import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, RestartSource, Sink, Sou
 import akka.stream._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.util.Random
 import scala.concurrent.duration._
 
@@ -159,4 +159,19 @@ object RecoverWithSupervisionStrategyApp extends App with AkkaStreamPlayground {
     .log("error logging")
     .mapAsync(2)(getPrint("after"))
     .runWith(Sink.ignore)
+}
+
+object SourceQueueApp extends App with AkkaStreamPlayground {
+  desc("throw exception if offer element to failed source queue")
+  val queue = Source.queue[Int](1, OverflowStrategy.backpressure)
+    .map { value =>
+      if (value == 42) {
+        throw new RuntimeException("Oops")
+      }
+      value
+    }
+    .to(Sink.foreach(println)).run()
+  Await.result(queue.offer(1), Duration.Inf)
+  Await.result(queue.offer(42), Duration.Inf)
+  Await.result(queue.offer(3), Duration.Inf)
 }
