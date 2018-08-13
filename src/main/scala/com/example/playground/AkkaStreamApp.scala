@@ -1,11 +1,10 @@
 package com.example.playground
 
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, RestartSource, Sink, Source, ZipWith}
+import akka.event.LoggingAdapter
 import akka.stream._
+import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, RestartSource, Sink, Source, ZipWith}
 
-import scala.concurrent.{Await, Future}
-import scala.util.Random
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 object AkkaStreamApp extends App with Utils {
@@ -148,4 +147,44 @@ object SourceQueueApp extends App with Utils {
   Await.result(queue.offer(1), Duration.Inf)
   Await.result(queue.offer(42), Duration.Inf)
   Await.result(queue.offer(3), Duration.Inf)
+}
+
+object CustomLoggingAdaptor extends App with Utils {
+  desc("send error metrics to somewhere")
+
+  Source(-5 to 5)
+    .mapAsync(2)(action)
+    .log("error logging")(new ErrorLoggingAdapter())
+    .runWith(Sink.ignore)
+}
+
+
+class ErrorLoggingAdapter() extends LoggingAdapter {
+  override def isErrorEnabled: Boolean = true
+
+  override def isWarningEnabled: Boolean = false
+
+  override def isInfoEnabled: Boolean = false
+
+  override def isDebugEnabled: Boolean = false
+
+  override protected def notifyError(message: String): Unit = {
+    println(s"got error message $message")
+  }
+
+  override protected def notifyError(cause: Throwable, message: String): Unit = {
+    println(s"got error message $message with throwable cause")
+  }
+
+  override protected def notifyWarning(message: String): Unit = {
+
+  }
+
+  override protected def notifyInfo(message: String): Unit = {
+
+  }
+
+  override protected def notifyDebug(message: String): Unit = {
+
+  }
 }
