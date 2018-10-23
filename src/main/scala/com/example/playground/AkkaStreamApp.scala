@@ -2,7 +2,7 @@ package com.example.playground
 
 import akka.event.LoggingAdapter
 import akka.stream._
-import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, RestartSource, Sink, Source, ZipWith}
+import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, MergeHub, RestartSource, Sink, Source, ZipWith}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -156,6 +156,41 @@ object CustomLoggingAdaptor extends App with Utils {
     .mapAsync(2)(action)
     .log("error logging")(new ErrorLoggingAdapter())
     .runWith(Sink.ignore)
+}
+
+object AlsoToApp extends App with Utils {
+  val sink = MergeHub
+    .source[Int]
+    .mapAsync(1)(action)
+    .log("MergeHub")
+    .to(Sink.foreach(value => println(s"MergeHub: $value")))
+    .run()
+
+  desc("consume element with two sinks")
+  Source(1 to 3)
+    .alsoTo(sink)
+    .log("Main")
+    .to(Sink.foreach(println(_)))
+    .run()
+
+  desc("fail merge sink")
+  Source(-5 to 5)
+    .alsoTo(sink)
+    .log("Main")
+    .to(Sink.foreach(println(_)))
+    .run()
+
+  desc("alsoTo an canceled sink")
+  val queue = Source
+    .queue(10, OverflowStrategy.backpressure)
+    .alsoTo(sink)
+    .log("Main")
+    .to(Sink.foreach(println(_)))
+    .run()
+
+  Await.result(queue.offer(1), Duration.Inf)
+  Await.result(queue.offer(2), Duration.Inf)
+  Await.result(queue.offer(3), Duration.Inf)
 }
 
 
