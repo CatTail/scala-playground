@@ -1,7 +1,9 @@
 package com.example.playground
 
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Flow
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -30,4 +32,9 @@ trait Utils {
     1 / input
     input
   }
+
+  def printlnFlow: Flow[Int, Int, NotUsed] = Flow[Int].map(i => {
+    println(i)
+    i
+  })
 }

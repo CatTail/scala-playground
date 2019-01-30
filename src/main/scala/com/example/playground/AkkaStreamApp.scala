@@ -4,7 +4,7 @@ import akka.event.LoggingAdapter
 import akka.stream._
 import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, MergeHub, RestartSource, Sink, Source, ZipWith}
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 object AkkaStreamApp extends App with Utils {
@@ -44,7 +44,7 @@ object ErrorWithBroadcastFlowsApp extends App with Utils {
       import GraphDSL.Implicits._
 
       val broadcast = builder.add(Broadcast[Int](2))
-      val zip = builder.add(ZipWith[Int, Int, Int](_+_))
+      val zip = builder.add(ZipWith[Int, Int, Int](_ + _))
       val flow1 = builder.add(Flow[Int].mapAsync(2)(getPrint("flow1")))
       val flow2 = builder.add(Flow[Int].mapAsync(2)(getPrint("flow2")))
 
@@ -66,7 +66,7 @@ object ErrorInsideBroadcastFlowsApp extends App with Utils {
       import GraphDSL.Implicits._
 
       val broadcast = builder.add(Broadcast[Int](2))
-      val zip = builder.add(ZipWith[Int, Int, Int](_+_))
+      val zip = builder.add(ZipWith[Int, Int, Int](_ + _))
       val flow1 = builder.add(Flow[Int].mapAsync(2)(getPrint("flow1")).mapAsync(2)(action))
       val flow2 = builder.add(Flow[Int].mapAsync(2)(getPrint("flow2")))
 
@@ -88,7 +88,7 @@ object ErrorInsideBroadcastFlowsWithBufferApp extends App with Utils {
       import GraphDSL.Implicits._
 
       val broadcast = builder.add(Broadcast[Int](2))
-      val zip = builder.add(ZipWith[Int, Int, Int](_+_))
+      val zip = builder.add(ZipWith[Int, Int, Int](_ + _))
       val flow1 = builder.add(Flow[Int].buffer(10, OverflowStrategy.backpressure).mapAsync(2)(getPrint("flow1")).mapAsync(2)(action))
       val flow2 = builder.add(Flow[Int].buffer(10, OverflowStrategy.backpressure).mapAsync(2)(getPrint("flow2")))
 
@@ -193,6 +193,31 @@ object AlsoToApp extends App with Utils {
   Await.result(queue.offer(3), Duration.Inf)
 }
 
+object BackpressureApp extends App with Utils {
+  desc("backpressure")
+  Source(-5 to 5)
+    .via(printlnFlow)
+    .map(i => {
+      Thread.sleep(1000)
+      i
+    })
+    .to(Sink.foreach(println(_)))
+    .run()
+}
+
+object BackpressureWithBufferApp extends App with Utils {
+  desc("backpressure with buffer not working")
+  Source(-5 to 5)
+    .via(printlnFlow)
+    .buffer(10, OverflowStrategy.backpressure)
+    .map(i => {
+      Thread.sleep(1000)
+      i
+    })
+    .async
+    .to(Sink.foreach(println(_)))
+    .run()
+}
 
 class ErrorLoggingAdapter() extends LoggingAdapter {
   override def isErrorEnabled: Boolean = true
