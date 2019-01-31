@@ -7,12 +7,12 @@ import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, MergeHub, RestartSource,
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
-object AkkaStreamApp extends App with Utils {
+object AkkaStreamApp extends App with CommonContext {
   Source(-5 to 5)
     .runWith(Sink.foreach(println))
 }
 
-object SimpleErrorApp extends App with Utils {
+object SimpleErrorApp extends App with CommonContext {
   desc("simple error")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -22,7 +22,7 @@ object SimpleErrorApp extends App with Utils {
     .runWith(Sink.ignore)
 }
 
-object ErrorWithRecoverApp extends App with Utils {
+object ErrorWithRecoverApp extends App with CommonContext {
   desc("error with recover")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -35,7 +35,7 @@ object ErrorWithRecoverApp extends App with Utils {
     .runWith(Sink.ignore)
 }
 
-object ErrorWithBroadcastFlowsApp extends App with Utils {
+object ErrorWithBroadcastFlowsApp extends App with CommonContext {
   desc("error with broadcast flows")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -58,7 +58,7 @@ object ErrorWithBroadcastFlowsApp extends App with Utils {
     .runWith(Sink.ignore)
 }
 
-object ErrorInsideBroadcastFlowsApp extends App with Utils {
+object ErrorInsideBroadcastFlowsApp extends App with CommonContext {
   desc("error inside one of broadcast flows")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -80,7 +80,7 @@ object ErrorInsideBroadcastFlowsApp extends App with Utils {
     .runWith(Sink.ignore)
 }
 
-object ErrorInsideBroadcastFlowsWithBufferApp extends App with Utils {
+object ErrorInsideBroadcastFlowsWithBufferApp extends App with CommonContext {
   desc("error inside one of broadcast flows with buffer")
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
@@ -102,7 +102,7 @@ object ErrorInsideBroadcastFlowsWithBufferApp extends App with Utils {
     .runWith(Sink.ignore)
 }
 
-object DelayedRestartWithBackoffStageApp extends App with Utils {
+object DelayedRestartWithBackoffStageApp extends App with CommonContext {
   desc("Delayed restarts with a backoff stage")
   RestartSource.withBackoff(
     minBackoff = 100.milliseconds,
@@ -121,7 +121,7 @@ object DelayedRestartWithBackoffStageApp extends App with Utils {
 }
 
 // recover element will lost when working with supervision strategy
-object RecoverWithSupervisionStrategyApp extends App with Utils {
+object RecoverWithSupervisionStrategyApp extends App with CommonContext {
   Source(-5 to 5)
     .mapAsync(2)(getPrint("before"))
     .mapAsync(2)(action)
@@ -134,7 +134,7 @@ object RecoverWithSupervisionStrategyApp extends App with Utils {
     .runWith(Sink.ignore)
 }
 
-object SourceQueueApp extends App with Utils {
+object SourceQueueApp extends App with CommonContext {
   desc("throw exception if offer element to failed source queue")
   val queue = Source.queue[Int](1, OverflowStrategy.backpressure)
     .map { value =>
@@ -149,7 +149,7 @@ object SourceQueueApp extends App with Utils {
   Await.result(queue.offer(3), Duration.Inf)
 }
 
-object CustomLoggingAdaptor extends App with Utils {
+object CustomLoggingAdaptor extends App with CommonContext {
   desc("send error metrics to somewhere")
 
   Source(-5 to 5)
@@ -158,42 +158,7 @@ object CustomLoggingAdaptor extends App with Utils {
     .runWith(Sink.ignore)
 }
 
-object AlsoToApp extends App with Utils {
-  val sink = MergeHub
-    .source[Int]
-    .mapAsync(1)(action)
-    .log("MergeHub")
-    .to(Sink.foreach(value => println(s"MergeHub: $value")))
-    .run()
-
-  desc("consume element with two sinks")
-  Source(1 to 3)
-    .alsoTo(sink)
-    .log("Main")
-    .to(Sink.foreach(println(_)))
-    .run()
-
-  desc("fail merge sink")
-  Source(-5 to 5)
-    .alsoTo(sink)
-    .log("Main")
-    .to(Sink.foreach(println(_)))
-    .run()
-
-  desc("alsoTo an canceled sink")
-  val queue = Source
-    .queue(10, OverflowStrategy.backpressure)
-    .alsoTo(sink)
-    .log("Main")
-    .to(Sink.foreach(println(_)))
-    .run()
-
-  Await.result(queue.offer(1), Duration.Inf)
-  Await.result(queue.offer(2), Duration.Inf)
-  Await.result(queue.offer(3), Duration.Inf)
-}
-
-object BackpressureApp extends App with Utils {
+object BackpressureApp extends App with CommonContext {
   desc("backpressure")
   Source(-5 to 5)
     .via(printlnFlow)
@@ -205,11 +170,31 @@ object BackpressureApp extends App with Utils {
     .run()
 }
 
-object BackpressureWithBufferApp extends App with Utils {
-  desc("backpressure with buffer not working")
-  Source(-5 to 5)
-    .via(printlnFlow)
-    .buffer(10, OverflowStrategy.backpressure)
+object BackpressureWithBufferApp extends App with CommonContext {
+  //  Source(1 to 100)
+  //    .alsoTo(Flow[Int]
+  //      .map(i => {
+  //        println("before", i)
+  //        i
+  //      })
+  //      .buffer(100, OverflowStrategy.backpressure)
+  //      .async
+  //      .map(i => {
+  //        Thread.sleep(1000)
+  //        i
+  //      })
+  ////      .addAttributes(Attributes.inputBuffer(initial = 1, max = 128))
+  //      .to(Sink.foreach(println(_)))
+  //    )
+  //    .to(Sink.foreach(println(_)))
+  //    .run()
+
+  Source(1 to 100)
+    .map(i => {
+      println("before", i)
+      i
+    })
+    .buffer(100, OverflowStrategy.backpressure)
     .map(i => {
       Thread.sleep(1000)
       i

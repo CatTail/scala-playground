@@ -4,7 +4,7 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
-object AwaitApp extends App with Utils {
+object AwaitApp extends App with CommonContext {
   desc("Await.ready don't throw exception on failure")
   println(Await.ready(Future {
     throw new RuntimeException("Oops")
