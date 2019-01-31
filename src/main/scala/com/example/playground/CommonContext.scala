@@ -33,8 +33,8 @@ trait CommonContext {
     input
   }
 
-  def printlnFlow: Flow[Int, Int, NotUsed] = Flow[Int].map(i => {
-    println(i)
+  def printlnFlow(prefix: String): Flow[Int, Int, NotUsed] = Flow[Int].map(i => {
+    println(s"$prefix: $i")
     i
   })
 }

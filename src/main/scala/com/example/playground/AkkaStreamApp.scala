@@ -158,52 +158,6 @@ object CustomLoggingAdaptor extends App with CommonContext {
     .runWith(Sink.ignore)
 }
 
-object BackpressureApp extends App with CommonContext {
-  desc("backpressure")
-  Source(-5 to 5)
-    .via(printlnFlow)
-    .map(i => {
-      Thread.sleep(1000)
-      i
-    })
-    .to(Sink.foreach(println(_)))
-    .run()
-}
-
-object BackpressureWithBufferApp extends App with CommonContext {
-  //  Source(1 to 100)
-  //    .alsoTo(Flow[Int]
-  //      .map(i => {
-  //        println("before", i)
-  //        i
-  //      })
-  //      .buffer(100, OverflowStrategy.backpressure)
-  //      .async
-  //      .map(i => {
-  //        Thread.sleep(1000)
-  //        i
-  //      })
-  ////      .addAttributes(Attributes.inputBuffer(initial = 1, max = 128))
-  //      .to(Sink.foreach(println(_)))
-  //    )
-  //    .to(Sink.foreach(println(_)))
-  //    .run()
-
-  Source(1 to 100)
-    .map(i => {
-      println("before", i)
-      i
-    })
-    .buffer(100, OverflowStrategy.backpressure)
-    .map(i => {
-      Thread.sleep(1000)
-      i
-    })
-    .async
-    .to(Sink.foreach(println(_)))
-    .run()
-}
-
 class ErrorLoggingAdapter() extends LoggingAdapter {
   override def isErrorEnabled: Boolean = true
 
