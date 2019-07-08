@@ -2,7 +2,7 @@ package com.example.playground
 
 import akka.event.LoggingAdapter
 import akka.stream._
-import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, MergeHub, RestartSource, Sink, Source, ZipWith}
+import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Keep, MergeHub, RestartSource, Sink, Source, ZipWith}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
@@ -147,6 +147,27 @@ object SourceQueueApp extends App with CommonContext {
   Await.result(queue.offer(1), Duration.Inf)
   Await.result(queue.offer(42), Duration.Inf)
   Await.result(queue.offer(3), Duration.Inf)
+}
+
+object SinkQueueApp extends App with CommonContext {
+  desc("return stream result as interable")
+  val queue = Source(1 to 10)
+    .toMat(Sink.queue())(Keep.right)
+    .run()
+  val iterable = new Iterable[Int] {
+    override def iterator: Iterator[Int] = new Iterator[Int] {
+      var cursor: Option[Int] = Await.result(queue.pull(), Duration.Inf)
+
+      override def hasNext: Boolean = cursor.isDefined
+
+      override def next(): Int = {
+        val oldCursor = cursor
+        cursor = Await.result(queue.pull(), Duration.Inf)
+        oldCursor.get
+      }
+    }
+  }
+  println(iterable.toList)
 }
 
 object CustomLoggingAdaptor extends App with CommonContext {
