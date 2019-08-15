@@ -137,8 +137,8 @@ object RecoverWithSupervisionStrategyApp extends App with CommonContext {
     .runWith(Sink.ignore)
 }
 
-object ErrorInsideSubstream extends App with CommonContext {
-  desc("Substream start to backpressure after failure even with Resume supervision strategy")
+object ErrorBetweenBroadcastAndZipApp extends App with CommonContext {
+  desc("SourceQueue start to backpressure after failure even with Resume supervision strategy")
   var input = 0
   val isEndOfStream = new AtomicBoolean(false)
 
