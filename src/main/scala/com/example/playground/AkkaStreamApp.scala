@@ -2,9 +2,9 @@ package com.example.playground
 
 import akka.event.LoggingAdapter
 import akka.stream._
-import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Keep, MergeHub, RestartSource, Sink, Source, ZipWith}
+import akka.stream.scaladsl.{Keep, Sink, Source}
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 object AkkaStreamApp extends App with CommonContext {

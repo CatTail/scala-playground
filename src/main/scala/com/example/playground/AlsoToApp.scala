@@ -2,11 +2,11 @@ package com.example.playground
 
 import akka.NotUsed
 import akka.stream.OverflowStrategy
-import akka.stream.scaladsl.{Flow, MergeHub, Sink, Source}
+import akka.stream.scaladsl.{MergeHub, Sink, Source}
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 object AlsoToContext extends CommonContext {
   val sink: Sink[Int, NotUsed] = MergeHub.source[Int]
@@ -25,6 +25,7 @@ object AlsoToContext extends CommonContext {
 }
 
 object AlsoToMergeHubApp extends App with CommonContext {
+
   import AlsoToContext._
 
   desc("consume element with two sinks")
@@ -36,6 +37,7 @@ object AlsoToMergeHubApp extends App with CommonContext {
 }
 
 object AlsoToFailedMergeHubApp extends App with CommonContext {
+
   import AlsoToContext._
 
   desc("fail merge sink")
@@ -59,6 +61,7 @@ object AlsoToFailedMergeHubApp extends App with CommonContext {
 }
 
 object AlsoToWithBackpressureApp extends App with CommonContext {
+
   import AlsoToContext._
 
   Source(1 to 64)
@@ -68,6 +71,7 @@ object AlsoToWithBackpressureApp extends App with CommonContext {
 }
 
 object AlsoToMergeHubWithBackpressureApp extends App with CommonContext {
+
   import AlsoToContext._
 
   desc("multiple source write to single backpressure sink")
