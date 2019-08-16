@@ -123,6 +123,39 @@ object DelayedRestartWithBackoffStageApp extends App with CommonContext {
     .runWith(Sink.ignore)
 }
 
+object MaxRestartsApplyToMinBackoffApp extends App with CommonContext {
+  desc("MaxRestarts only apply to minBackoff duration, larger duration will reset counter")
+
+  val shouldThrowException = new AtomicBoolean(false)
+
+  RestartSource
+    .withBackoff(
+      minBackoff = 100.milliseconds,
+      maxBackoff = 5000.milliseconds,
+      randomFactor = 0.2, // adds 20% "noise" to vary the intervals slightly
+      maxRestarts = 5 // limits the amount of restarts to 20
+    ) { () ⇒
+      // Create a source from a future of a source
+      Source(Stream.from(1))
+        .mapAsync(2) { num =>
+          Future {
+            Thread.sleep(Random.nextInt(10))
+            if (shouldThrowException.getAndSet(false)) {
+              throw new RuntimeException("Oops")
+            }
+            num
+          }
+        }
+        .log("error logging")
+    }
+    .runWith(Sink.ignore)
+
+  // throw exception every second
+  system.scheduler.schedule(0.second, 1.second) {
+    shouldThrowException.set(true)
+  }
+}
+
 // recover element will lost when working with supervision strategy
 object RecoverWithSupervisionStrategyApp extends App with CommonContext {
   Source(-5 to 5)
