@@ -1,10 +1,12 @@
 package com.example.playground
 
+import akka.{Done, NotUsed}
 import akka.event.LoggingAdapter
 import akka.stream._
 import akka.stream.scaladsl.{Keep, Sink, Source}
 
-import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 object AkkaStreamApp extends App with CommonContext {
@@ -14,14 +16,16 @@ object AkkaStreamApp extends App with CommonContext {
 
 object SourceQueueApp extends App with CommonContext {
   desc("throw exception if offer element to failed source queue")
-  val queue = Source.queue[Int](1, OverflowStrategy.backpressure)
+  val queue = Source
+    .queue[Int](1, OverflowStrategy.backpressure)
     .map { value =>
       if (value == 42) {
         throw new RuntimeException("Oops")
       }
       value
     }
-    .to(Sink.foreach(println)).run()
+    .to(Sink.foreach(println))
+    .run()
   Await.result(queue.offer(1), Duration.Inf)
   Await.result(queue.offer(42), Duration.Inf)
   Await.result(queue.offer(3), Duration.Inf)
@@ -46,6 +50,26 @@ object SinkQueueApp extends App with CommonContext {
     }
   }
   println(iterable.toList)
+}
+
+object KillSwitchApp extends App with CommonContext {
+  desc("shutdown graph and waiting inflight message processed")
+  val (ks, future) = Source(1 to 10)
+    .map { item =>
+      Thread.sleep(1000)
+      item
+    }
+    .mapAsync(2)(getPrint("read"))
+    .viaMat(KillSwitches.single)(Keep.right)
+    .mapAsync(2)(getPrint("write"))
+    .toMat(Sink.foreach(item => println(s"checkpoint $item")))(Keep.both)
+    .run()
+
+  Thread.sleep(5000)
+  println("shutdown graph")
+  ks.shutdown()
+  Await.result(future, 20.seconds)
+  println("future completed")
 }
 
 object CustomLoggingAdaptor extends App with CommonContext {
@@ -74,15 +98,9 @@ class ErrorLoggingAdapter() extends LoggingAdapter {
     println(s"got error message $message with throwable cause")
   }
 
-  override protected def notifyWarning(message: String): Unit = {
+  override protected def notifyWarning(message: String): Unit = {}
 
-  }
+  override protected def notifyInfo(message: String): Unit = {}
 
-  override protected def notifyInfo(message: String): Unit = {
-
-  }
-
-  override protected def notifyDebug(message: String): Unit = {
-
-  }
+  override protected def notifyDebug(message: String): Unit = {}
 }
