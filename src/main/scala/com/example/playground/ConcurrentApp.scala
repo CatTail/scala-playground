@@ -1,9 +1,11 @@
 package com.example.playground
 
-import scala.concurrent.{Await, Future}
+import akka.Done
+
+import scala.concurrent.{Await, Future, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
 import scala.concurrent.duration._
 
 object AwaitApp extends App with CommonContext {
@@ -31,4 +33,13 @@ object FutureTransform extends App with CommonContext {
   }
 
   println(Await.result(newFuture, 1.second))
+}
+
+object PromiseCompletionApp extends App with CommonContext {
+  desc("promise listener should work even setup before actual future")
+  val promise: Promise[String] = Promise()
+  promise.future.onComplete {
+    case msg => println(msg)
+  }
+  promise.completeWith(Future.successful("Hello World"))
 }
