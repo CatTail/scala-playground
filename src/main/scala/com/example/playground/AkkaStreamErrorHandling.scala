@@ -208,11 +208,11 @@ object ErrorBetweenBroadcastAndZipApp extends App with CommonContext {
         println("Other Exception")
         Stop
     })
-    .to(Sink.ignore)
+    .to(Sink.foreach(println))
     .run()
 
   while (true) {
-    Await.result(queue.offer(input), 1.minute)
+    Await.result(queue.offer(input), 10.seconds)
     input = input + 1
     if (input == 1000) {
       isEndOfStream.set(true)
