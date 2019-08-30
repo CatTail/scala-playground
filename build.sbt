@@ -17,7 +17,9 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
   "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
   "ch.qos.logback" % "logback-classic" % "1.2.3",
-  "com.wix" %% "accord-core" % "0.7.3"
+  "com.wix" %% "accord-core" % "0.7.3",
+  "org.ehcache" % "ehcache" % "3.8.0"
 )
 
 // For Settings/Task reference, see http://www.scala-sbt.org/release/sxr/sbt/Keys.scala.html
+resolvers ++= Seq(Resolver.sonatypeRepo("releases"))
