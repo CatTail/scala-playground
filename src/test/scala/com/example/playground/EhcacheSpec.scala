@@ -7,7 +7,7 @@ import org.ehcache.config.units.MemoryUnit
 import org.ehcache.xml.XmlConfiguration
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
-case class Book(isbn: String)
+class Book(var isbn: String) extends Serializable
 case class ComplexBook(value: Option[Book])
 
 class EhcacheSpec extends WordSpecLike with Matchers with BeforeAndAfterAll {
@@ -58,12 +58,12 @@ class EhcacheSpec extends WordSpecLike with Matchers with BeforeAndAfterAll {
             ResourcePoolsBuilder.heap(10).disk(10, MemoryUnit.MB)
           )
       )
-      cache.put("1", ComplexBook(Some(Book("id1"))))
-      cache.put("2", ComplexBook(Some(Book("id2"))))
-      cache.put("3", ComplexBook(Some(Book("id3"))))
-      cache.put("4", ComplexBook(Some(Book("id4"))))
-      val value = cache.get("1")
-      value should be(ComplexBook(Some(Book("id1"))))
+      cache.put("1", ComplexBook(Some(new Book("id1"))))
+      cache.put("2", ComplexBook(Some(new Book("id2"))))
+      cache.put("3", ComplexBook(Some(new Book("id3"))))
+      cache.put("4", ComplexBook(Some(new Book("id4"))))
+      val value: ComplexBook = cache.get("1")
+      value.value.get.isbn should be("id1")
 
       cacheManager.removeCache("myCache")
     }
