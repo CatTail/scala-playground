@@ -8,6 +8,7 @@ import org.ehcache.xml.XmlConfiguration
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 case class Book(isbn: String)
+case class ComplexBook(value: Option[Book])
 
 class EhcacheSpec extends WordSpecLike with Matchers with BeforeAndAfterAll {
   "Ehcache" should {
@@ -44,7 +45,7 @@ class EhcacheSpec extends WordSpecLike with Matchers with BeforeAndAfterAll {
     "serialize and deserialize scala case class" in {
       val cacheManager = CacheManagerBuilder
         .newCacheManagerBuilder()
-        .`with`(CacheManagerBuilder.persistence(new File("/tmp", "myData")))
+        .`with`(CacheManagerBuilder.persistence(new File("/tmp", "scala-playground-ehcache-spec")))
         .build
       cacheManager.init()
 
@@ -53,16 +54,16 @@ class EhcacheSpec extends WordSpecLike with Matchers with BeforeAndAfterAll {
         CacheConfigurationBuilder
           .newCacheConfigurationBuilder(
             classOf[String],
-            classOf[Book],
+            classOf[ComplexBook],
             ResourcePoolsBuilder.heap(10).disk(10, MemoryUnit.MB)
           )
       )
-      cache.put("1", Book("id1"))
-      cache.put("2", Book("id2"))
-      cache.put("3", Book("id3"))
-      cache.put("4", Book("id4"))
+      cache.put("1", ComplexBook(Some(Book("id1"))))
+      cache.put("2", ComplexBook(Some(Book("id2"))))
+      cache.put("3", ComplexBook(Some(Book("id3"))))
+      cache.put("4", ComplexBook(Some(Book("id4"))))
       val value = cache.get("1")
-      value should be(Book("id1"))
+      value should be(ComplexBook(Some(Book("id1"))))
 
       cacheManager.removeCache("myCache")
     }
