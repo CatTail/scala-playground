@@ -48,7 +48,7 @@ class EhcacheSpec extends WordSpecLike with Matchers with BeforeAndAfterAll {
     "serialize and deserialize scala case class" in {
       val cacheManager = CacheManagerBuilder
         .newCacheManagerBuilder()
-        .`with`(CacheManagerBuilder.persistence(new File("/tmp", "scala-playground-ehcache-spec")))
+        .`with`(CacheManagerBuilder.persistence(new File("/tmp", "scala-playground-ehcache")))
         .build
       cacheManager.init()
 
@@ -58,7 +58,7 @@ class EhcacheSpec extends WordSpecLike with Matchers with BeforeAndAfterAll {
           .newCacheConfigurationBuilder(
             classOf[String],
             classOf[ComplexBook],
-            ResourcePoolsBuilder.heap(10).disk(10, MemoryUnit.MB)
+            ResourcePoolsBuilder.heap(10).disk(10, MemoryUnit.MB, true)
           )
       )
       cache.put("1", ComplexBook(Some(new Book("id1", Apple))))
@@ -70,5 +70,6 @@ class EhcacheSpec extends WordSpecLike with Matchers with BeforeAndAfterAll {
 
       cacheManager.removeCache("myCache")
     }
+
   }
 }
