@@ -6,6 +6,8 @@ import akka.Done
 import akka.stream.Supervision.{Resume, Stop}
 import akka.stream._
 import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, RestartSource, Sink, Source, Zip, ZipWith}
+import akka.stream.ActorAttributes.supervisionStrategy
+import akka.stream.Supervision.resumingDecider
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -30,6 +32,20 @@ object ErrorWithRecoverApp extends App with CommonContext {
     .recover {
       case _: RuntimeException => 9999999
     }
+    .log("error logging")
+    .mapAsync(2)(getPrint("after"))
+    .runWith(Sink.ignore)
+}
+
+object ErrorWithRecoverAndResumeApp extends App with CommonContext {
+  desc("error with recover and resume")
+  Source(-5 to 5)
+    .mapAsync(2)(getPrint("before"))
+    .mapAsync(2)(action)
+    .recover {
+      case _: RuntimeException => 9999999
+    }
+    .withAttributes(supervisionStrategy(resumingDecider))
     .log("error logging")
     .mapAsync(2)(getPrint("after"))
     .runWith(Sink.ignore)
